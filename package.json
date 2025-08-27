@@ -1,0 +1,31 @@
+{
+  "name": "mind-back-api",
+  "version": "1.0.0",
+  "description": "Backend API for Mind Chat Application - Authentication & User Profile Module",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
+    "studio": "prisma studio"
+  },
+  "keywords": ["nodejs", "express", "prisma", "jwt", "authentication"],
+  "author": "Mind Chat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.4.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.10.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "prisma": "^5.4.2"
+  }
+}

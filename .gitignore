@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.db-journal
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+prisma/migrations/
