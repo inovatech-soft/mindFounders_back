@@ -51,8 +51,8 @@ app.use('/api', routes);
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Mind Chat API - Módulo de Autenticação e Perfil de Usuário',
-    version: '1.0.0',
+    message: 'Mind Chat API - Módulos de Autenticação, Perfil e Questionário MindFounders',
+    version: '1.1.0',
     endpoints: {
       health: '/api/health',
       auth: {
@@ -62,6 +62,14 @@ app.get('/', (req, res) => {
       user: {
         profile: 'GET /api/user/profile',
         updateProfile: 'PUT /api/user/profile',
+      },
+      questionnaire: {
+        create: 'POST /api/user/questionnaire',
+        get: 'GET /api/user/questionnaire',
+        update: 'PUT /api/user/questionnaire',
+        delete: 'DELETE /api/user/questionnaire',
+        status: 'GET /api/user/questionnaire/status',
+        stats: 'GET /api/user/questionnaire/stats',
       },
     },
   });
@@ -86,11 +94,24 @@ const startServer = () => {
       console.log(`💚 Health Check: http://localhost:${config.port}/api/health`);
       console.log('');
       console.log('Available endpoints:');
-      console.log('  POST /api/auth/register   - Register new user');
-      console.log('  POST /api/auth/login      - Login user');
-      console.log('  GET  /api/user/profile    - Get user profile (protected)');
-      console.log('  PUT  /api/user/profile    - Update user profile (protected)');
-      console.log('  GET  /api/health          - Health check');
+      console.log('  🔐 Authentication:');
+      console.log('    POST /api/auth/register          - Register new user');
+      console.log('    POST /api/auth/login             - Login user');
+      console.log('');
+      console.log('  👤 User Profile:');
+      console.log('    GET  /api/user/profile           - Get user profile (protected)');
+      console.log('    PUT  /api/user/profile           - Update user profile (protected)');
+      console.log('');
+      console.log('  📋 Questionnaire:');
+      console.log('    POST /api/user/questionnaire     - Create questionnaire (protected)');
+      console.log('    GET  /api/user/questionnaire     - Get questionnaire (protected)');
+      console.log('    PUT  /api/user/questionnaire     - Update questionnaire (protected)');
+      console.log('    DELETE /api/user/questionnaire   - Delete questionnaire (protected)');
+      console.log('    GET  /api/user/questionnaire/status - Check questionnaire status (protected)');
+      console.log('    GET  /api/user/questionnaire/stats  - Get questionnaire stats (protected)');
+      console.log('');
+      console.log('  ⚕️  System:');
+      console.log('    GET  /api/health                 - Health check');
     });
   } catch (error) {
     console.error('❌ Error starting server:', error);

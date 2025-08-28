@@ -11,15 +11,40 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String
-  email         String   @unique
+  email         String         @unique
   password      String
   avatar        String?
-  favorites     String? // JSON string of favorite character names
-  responseStyle String   @default("BREVE") // BREVE, DETALHADA, ESPIRITUAL, PRATICA
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  favorites     String?        // JSON string of favorite character names
+  responseStyle String         @default("BREVE") // BREVE, DETALHADA, ESPIRITUAL, PRATICA
+  questionnaire Questionnaire?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@map("users")
+}
+
+model Questionnaire {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  ageRange           String
+  currentSituation   String
+  anxietyFrequency   String
+  sadnessHandling    String[] // Array of strings for multiple options
+  socialLife         String
+  loveRelationships  String
+  workFeeling        String
+  motivation         String[] // Array of strings for multiple options
+  routine            String
+  sleep              String
+  selfKnowledgeGoal  String[] // Array of strings for multiple options
+  values             String[] // Array of strings for multiple options
+  challenge          String
+  childhoodInfluence String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("questionnaires")
 }
