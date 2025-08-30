@@ -28,7 +28,8 @@ export const COUNCIL_RESPONSE_SCHEMA = {
           characterName: { type: "string" },
           content: { type: "string" }
         },
-        required: ["characterKey", "characterName", "content"]
+        required: ["characterKey", "characterName", "content"],
+        additionalProperties: false
       }
     },
     suggested_topics: {
@@ -37,7 +38,8 @@ export const COUNCIL_RESPONSE_SCHEMA = {
       maxItems: 5
     }
   },
-  required: ["mode", "messages"]
+  required: ["mode", "messages"],
+  additionalProperties: false
 };
 
 export const DECISION_RESPONSE_SCHEMA = {
@@ -56,7 +58,8 @@ export const DECISION_RESPONSE_SCHEMA = {
           characterName: { type: "string" },
           summary: { type: "string" }
         },
-        required: ["characterKey", "characterName", "summary"]
+        required: ["characterKey", "characterName", "summary"],
+        additionalProperties: false
       }
     },
     final_decision: {
@@ -66,7 +69,8 @@ export const DECISION_RESPONSE_SCHEMA = {
         content: { type: "string" },
         rationale: { type: "string" }
       },
-      required: ["title", "content", "rationale"]
+      required: ["title", "content", "rationale"],
+      additionalProperties: false
     },
     suggested_topics: {
       type: "array",
@@ -74,7 +78,8 @@ export const DECISION_RESPONSE_SCHEMA = {
       maxItems: 5
     }
   },
-  required: ["mode", "analyses", "final_decision"]
+  required: ["mode", "analyses", "final_decision"],
+  additionalProperties: false
 };
 
 /**
@@ -127,6 +132,16 @@ export async function createStructuredResponse({
     }
   } catch (error) {
     console.error('OpenAI API Error:', error);
+    
+    // Handle specific schema validation errors
+    if (error.status === 400 && error.message?.includes('additionalProperties')) {
+      throw new Error('OpenAI schema validation failed: The response format schema is invalid. Please check the schema configuration.');
+    }
+    
+    if (error.status === 400 && error.message?.includes('response_format')) {
+      throw new Error('OpenAI response format error: The structured response format is not supported or incorrectly configured.');
+    }
+    
     throw new Error(`OpenAI request failed: ${error.message}`);
   }
 }
