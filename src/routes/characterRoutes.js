@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import { resourceRateLimit } from '../middlewares/rateLimiting.js';
 import { 
   getCharacters, 
   getCharacterByKey, 
@@ -16,16 +16,6 @@ import { authenticateToken } from '../middlewares/auth.js';
 import { validateRequest, createCharacterSchema } from '../utils/zodValidation.js';
 
 const router = Router();
-
-// Rate limiting for character routes
-const characterRateLimit = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later.'
-  }
-});
 
 /**
  * @swagger
@@ -125,7 +115,7 @@ const characterRateLimit = rateLimit({
  *       500:
  *         description: Internal server error
  */
-router.get('/', characterRateLimit, getCharacters);
+router.get('/', resourceRateLimit, getCharacters);
 
 /**
  * @swagger
@@ -166,7 +156,7 @@ router.get('/', characterRateLimit, getCharacters);
  *       500:
  *         description: Internal server error
  */
-router.get('/:key', characterRateLimit, getCharacterByKey);
+router.get('/:key', resourceRateLimit, getCharacterByKey);
 
 /**
  * @swagger

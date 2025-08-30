@@ -4,8 +4,15 @@ import helmet from 'helmet';
 import config from './config/index.js';
 import routes from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
+import { generalRateLimit } from './middlewares/rateLimiting.js';
 
 const app = express();
+
+/**
+ * Trust proxy configuration for deployment (Vercel, Heroku, etc.)
+ * This allows express-rate-limit to work correctly behind proxies
+ */
+app.set('trust proxy', true);
 
 /**
  * Security middleware
@@ -29,6 +36,11 @@ app.use(cors({
  */
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+/**
+ * Global rate limiting
+ */
+app.use('/api/', generalRateLimit);
 
 /**
  * Request logging in development

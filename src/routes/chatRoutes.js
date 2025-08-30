@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import { chatRateLimit, messageRateLimit } from '../middlewares/rateLimiting.js';
 import { 
   createSession, 
   getSessions, 
@@ -25,25 +25,6 @@ import {
 } from '../utils/zodValidation.js';
 
 const router = Router();
-
-// Rate limiting for chat routes (more restrictive due to OpenAI costs)
-const chatRateLimit = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 30, // limit each IP to 30 requests per windowMs for chat
-  message: {
-    success: false,
-    message: 'Too many chat requests, please try again later.'
-  }
-});
-
-const messageRateLimit = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 10, // limit each IP to 10 messages per minute
-  message: {
-    success: false,
-    message: 'Too many messages, please slow down.'
-  }
-});
 
 /**
  * @swagger
