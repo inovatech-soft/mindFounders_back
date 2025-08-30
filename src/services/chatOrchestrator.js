@@ -49,6 +49,15 @@ export async function runCouncil({ session, userInput, characters, messageHistor
 
       responseData = JSON.parse(content);
       
+      // Ensure suggested_topics is always present
+      if (!responseData.suggested_topics || !Array.isArray(responseData.suggested_topics)) {
+        responseData.suggested_topics = [
+          "Desenvolvimento pessoal",
+          "Relacionamentos familiares",
+          "Propósito de vida"
+        ];
+      }
+      
       // Validate with Zod
       const validatedResponse = councilResponseSchema.parse(responseData);
       responseData = validatedResponse;
@@ -164,6 +173,15 @@ export async function runDecision({ session, userInput, characters, messageHisto
       }
 
       responseData = JSON.parse(content);
+      
+      // Ensure suggested_topics is always present
+      if (!responseData.suggested_topics || !Array.isArray(responseData.suggested_topics)) {
+        responseData.suggested_topics = [
+          "Próximos passos práticos",
+          "Reflexões sobre a decisão",
+          "Implementação das mudanças"
+        ];
+      }
       
       // Validate with Zod
       const validatedResponse = decisionResponseSchema.parse(responseData);

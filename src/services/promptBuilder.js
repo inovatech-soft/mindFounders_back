@@ -148,6 +148,8 @@ FORMATO DE RESPOSTA: Retorne um JSON válido seguindo exatamente esta estrutura:
   "suggested_topics": ["tópico 1", "tópico 2", "tópico 3"]
 }
 
+IMPORTANTE: O campo "suggested_topics" é OBRIGATÓRIO e deve sempre conter pelo menos 1-3 sugestões de tópicos relacionados para continuar a conversa.
+
 ${historyText}
 
 NOVA PERGUNTA DO USUÁRIO: ${userInput}`;
@@ -198,6 +200,11 @@ FORMATO DE RESPOSTA: Retorne um JSON válido seguindo exatamente esta estrutura:
     "title": "Título da Decisão",
     "content": "Conteúdo da decisão...",
     "rationale": "Justificativa da decisão..."
+  },
+  "suggested_topics": ["tópico 1", "tópico 2", "tópico 3"]
+}
+
+IMPORTANTE: O campo "suggested_topics" é OBRIGATÓRIO e deve sempre conter pelo menos 1-3 sugestões de tópicos relacionados.
   },
   "suggested_topics": ["tópico 1", "tópico 2", "tópico 3"]
 }

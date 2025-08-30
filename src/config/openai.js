@@ -38,7 +38,7 @@ export const COUNCIL_RESPONSE_SCHEMA = {
       maxItems: 5
     }
   },
-  required: ["mode", "messages"],
+  required: ["mode", "messages", "suggested_topics"],
   additionalProperties: false
 };
 
@@ -78,7 +78,7 @@ export const DECISION_RESPONSE_SCHEMA = {
       maxItems: 5
     }
   },
-  required: ["mode", "analyses", "final_decision"],
+  required: ["mode", "analyses", "final_decision", "suggested_topics"],
   additionalProperties: false
 };
 
