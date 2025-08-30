@@ -13,7 +13,13 @@
     "studio": "prisma studio",
     "postinstall": "prisma generate"
   },
-  "keywords": ["nodejs", "express", "prisma", "jwt", "authentication"],
+  "keywords": [
+    "nodejs",
+    "express",
+    "prisma",
+    "jwt",
+    "authentication"
+  ],
   "author": "Mind Chat Team",
   "license": "MIT",
   "dependencies": {
@@ -22,9 +28,14 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
     "helmet": "^7.0.0",
+    "joi": "^17.10.1",
     "jsonwebtoken": "^9.0.2",
-    "joi": "^17.10.1"
+    "openai": "^4.20.1",
+    "pino": "^8.15.1",
+    "pino-pretty": "^13.1.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

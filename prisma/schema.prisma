@@ -10,6 +10,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ChatMode {
+  COUNCIL
+  DECISION
+}
+
+enum MessageRole {
+  USER
+  CHARACTER
+  NARRATOR
+  SUMMARY
+  SYSTEM
+}
+
 model User {
   id            String         @id @default(cuid())
   name          String
@@ -18,11 +31,71 @@ model User {
   avatar        String?
   favorites     String?        // JSON string of favorite character names
   responseStyle String         @default("BREVE") // BREVE, DETALHADA, ESPIRITUAL, PRATICA
+  preferences   Json?          // Additional user preferences
   questionnaire Questionnaire?
+  chats         ChatSession[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
   @@map("users")
+}
+
+model Character {
+  id           String            @id @default(uuid())
+  key          String            @unique // "moises", "jose-egito", "salomao", "freud"
+  name         String
+  avatarUrl    String?
+  basePrompt   String            // persona + estilo
+  styleTags    String[]          @default([]) // "espiritual", "psicanalítico", etc.
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  participants ChatParticipant[]
+
+  @@map("characters")
+}
+
+model ChatSession {
+  id           String            @id @default(uuid())
+  userId       String
+  mode         ChatMode
+  title        String?
+  closed       Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@map("chat_sessions")
+  @@index([userId, createdAt])
+}
+
+model ChatParticipant {
+  id          String      @id @default(uuid())
+  sessionId   String
+  characterId String
+  orderIndex  Int         @default(0)
+  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  character   Character   @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, characterId])
+  @@map("chat_participants")
+}
+
+model Message {
+  id         String      @id @default(uuid())
+  sessionId  String
+  role       MessageRole // USER, CHARACTER, NARRATOR, SUMMARY, SYSTEM
+  authorKey  String?     // ex: "moises" para CHARACTER
+  authorName String?
+  content    String
+  meta       Json?       // Additional metadata (suggested_topics, etc.)
+  createdAt  DateTime    @default(now())
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+  @@index([sessionId, createdAt])
 }
 
 model Questionnaire {
