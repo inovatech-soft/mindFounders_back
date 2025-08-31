@@ -58,6 +58,34 @@ export const questionnaireResponseSchema = z.object({
   responses: z.record(z.any()) // flexible object for questionnaire responses
 });
 
+// Preferences schemas
+export const createPreferencesSchema = z.object({
+  responseTone: z.enum(['breve', 'detalhada', 'espiritual', 'pratica']).default('detalhada')
+});
+
+export const updatePreferencesSchema = z.object({
+  responseTone: z.enum(['breve', 'detalhada', 'espiritual', 'pratica']).optional()
+});
+
+export const updateNotificationsSchema = z.object({
+  notificationEnabled: z.boolean().optional(),
+  notificationType: z.enum(['daily', 'weekly']).optional(),
+  notificationTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Time must be in HH:MM format').optional(),
+  notificationDays: z.array(z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])).optional()
+}).refine((data) => {
+  // Se notificações estão habilitadas, deve ter tipo e horário
+  if (data.notificationEnabled === true) {
+    return data.notificationType && data.notificationTime;
+  }
+  // Se tipo é weekly, deve ter dias especificados
+  if (data.notificationType === 'weekly') {
+    return data.notificationDays && data.notificationDays.length > 0;
+  }
+  return true;
+}, {
+  message: "When notifications are enabled, type and time are required. For weekly notifications, days must be specified."
+});
+
 // Response validation schemas (for OpenAI responses)
 export const councilResponseSchema = z.object({
   mode: z.literal('COUNCIL'),

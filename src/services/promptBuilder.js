@@ -4,17 +4,27 @@
  */
 
 import logger from '../utils/logger.js';
+import { getUserResponseTone } from './preferencesService.js';
 
 /**
- * Build user context from profile and questionnaire
+ * Build user context from profile, questionnaire, and preferences
  */
-export function buildUserContext(user) {
+export async function buildUserContext(user) {
   const context = {
     name: user.name,
     responseStyle: user.responseStyle || 'BREVE',
     favorites: [],
     language: 'pt-BR'
   };
+
+  // Get user's response tone preference
+  try {
+    const responseTone = await getUserResponseTone(user.id);
+    context.responseTone = responseTone;
+  } catch (error) {
+    logger.warn('Failed to get user response tone, using default:', error);
+    context.responseTone = 'detalhada';
+  }
 
   // Parse favorites if exists
   try {
@@ -51,7 +61,21 @@ export function buildUserContext(user) {
 }
 
 /**
- * Get response style instructions based on user preference
+ * Get response tone instructions based on user preference
+ */
+function getResponseToneInstructions(responseTone) {
+  const tones = {
+    breve: 'Mantenha suas respostas concisas e diretas, entre 2-3 parágrafos curtos. Vá direto ao ponto principal sem perder a essência da mensagem.',
+    detalhada: 'Forneça respostas completas e bem explicadas, com exemplos práticos, contexto detalhado e reflexões profundas quando apropriado.',
+    espiritual: 'Enfatize aspectos espirituais, princípios bíblicos, crescimento da fé e conexão com o divino. Use linguagem reverente, inspiradora e com referências sagradas.',
+    pratica: 'Foque em soluções práticas e passos concretos que a pessoa pode implementar imediatamente no dia a dia. Seja objetivo e orientado a ações.'
+  };
+
+  return tones[responseTone] || tones.detalhada;
+}
+
+/**
+ * Get legacy response style instructions (for backward compatibility)
  */
 function getResponseStyleInstructions(responseStyle) {
   const styles = {
@@ -81,7 +105,10 @@ REGRAS FUNDAMENTAIS:
 - Evite discursos longos ou pregação excessiva
   `;
 
-  const styleInstructions = getResponseStyleInstructions(userContext.responseStyle);
+  // Use new responseTone preference if available, fallback to legacy responseStyle
+  const toneInstructions = userContext.responseTone 
+    ? getResponseToneInstructions(userContext.responseTone)
+    : getResponseStyleInstructions(userContext.responseStyle);
 
   let contextualInfo = '';
   if (userContext.profile) {
@@ -103,7 +130,7 @@ Use estas informações para personalizar sua resposta e torná-la mais relevant
 
 ${baseRules}
 
-ESTILO DE RESPOSTA: ${styleInstructions}
+ESTILO DE RESPOSTA: ${toneInstructions}
 
 ${contextualInfo}
 

@@ -5,6 +5,7 @@ import config from './config/index.js';
 import routes from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { generalRateLimit } from './middlewares/rateLimiting.js';
+import { initializeNotificationScheduler, stopNotificationScheduler } from './services/notificationService.js';
 
 const app = express();
 
@@ -124,6 +125,15 @@ const startServer = () => {
       console.log('');
       console.log('  ⚕️  System:');
       console.log('    GET  /api/health                 - Health check');
+      console.log('');
+      
+      // Initialize notification scheduler
+      try {
+        initializeNotificationScheduler();
+        console.log('  📅 Notification scheduler initialized');
+      } catch (error) {
+        console.error('  ❌ Failed to initialize notification scheduler:', error.message);
+      }
     });
   } catch (error) {
     console.error('❌ Error starting server:', error);
@@ -134,11 +144,13 @@ const startServer = () => {
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
+  stopNotificationScheduler();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('SIGINT received. Shutting down gracefully...');
+  stopNotificationScheduler();
   process.exit(0);
 });
 

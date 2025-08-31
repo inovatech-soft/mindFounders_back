@@ -33,6 +33,7 @@ model User {
   responseStyle String         @default("BREVE") // BREVE, DETALHADA, ESPIRITUAL, PRATICA
   preferences   Json?          // Additional user preferences
   questionnaire Questionnaire?
+  userPreferences Preferences? // New preferences relation
   chats         ChatSession[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -120,4 +121,19 @@ model Questionnaire {
   updatedAt          DateTime @updatedAt
 
   @@map("questionnaires")
+}
+
+model Preferences {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  responseTone        String   @default("detalhada") // "breve", "detalhada", "espiritual", "pratica"
+  notificationEnabled Boolean  @default(false)
+  notificationType    String?  // "daily", "weekly"
+  notificationTime    String?  // Ex: "08:00"
+  notificationDays    String[] @default([]) // ["monday", "wednesday"] caso seja semanal
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("preferences")
 }

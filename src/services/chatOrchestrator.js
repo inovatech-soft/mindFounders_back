@@ -326,7 +326,7 @@ export async function orchestrateChat({ session, userInput, stream = false, res 
     }
 
     const characters = fullSession.participants.map(p => p.character);
-    const userContext = buildUserContext(fullSession.user);
+    const userContext = await buildUserContext(fullSession.user);
     const messageHistory = fullSession.messages;
 
     // Route to appropriate mode
