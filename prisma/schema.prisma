@@ -35,6 +35,10 @@ model User {
   questionnaire Questionnaire?
   userPreferences Preferences? // New preferences relation
   chats         ChatSession[]
+  // Spiritual features relations
+  oracoes       Oracao[]
+  participacoesEstudo ParticipacaoEstudo[]
+  diarioFe      DiarioFe[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -136,4 +140,89 @@ model Preferences {
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("preferences")
+}
+
+// Spiritual Features Models
+
+model Oracao {
+  id          String   @id @default(uuid())
+  userId      String
+  titulo      String
+  categoria   String   // "gratidao", "pedido", "intercession", "contemplation"
+  conteudo    String
+  emocoes     String[] @default([]) // Emotions associated with the prayer
+  tempoGasto  Int?     // Time spent in minutes
+  privacidade String   @default("privada") // "privada", "compartilhada"
+  isFavorita  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oracoes")
+  @@index([userId, createdAt])
+}
+
+model EstudoTematico {
+  id               String                 @id @default(uuid())
+  titulo           String
+  descricao        String
+  categoria        String                 // "fe", "sabedoria", "amor", "perda", "proposito"
+  tempoEstimado    Int                    // estimated time in minutes
+  sessoes          SessionEstudo[]
+  participacoes    ParticipacaoEstudo[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@map("estudos_tematicos")
+}
+
+model SessionEstudo {
+  id         String         @id @default(uuid())
+  estudoId   String
+  numero     Int            // session number (1, 2, 3...)
+  titulo     String
+  conteudo   String         // study content/questions
+  versiculo  String?        // related bible verse
+  reflexao   String         // reflection questions
+  estudo     EstudoTematico @relation(fields: [estudoId], references: [id], onDelete: Cascade)
+
+  @@map("sessoes_estudo")
+  @@index([estudoId, numero])
+}
+
+model ParticipacaoEstudo {
+  id               String         @id @default(uuid())
+  userId           String
+  estudoId         String
+  sessaoAtual      Int            @default(1)
+  progresso        Float          @default(0.0) // percentage completed
+  respostasUsuario Json?          // user answers to study questions
+  iniciadoEm       DateTime       @default(now())
+  finalizadoEm     DateTime?
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  estudo           EstudoTematico @relation(fields: [estudoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, estudoId])
+  @@map("participacoes_estudo")
+}
+
+model DiarioFe {
+  id           String   @id @default(uuid())
+  userId       String
+  titulo       String?  // optional title for the entry
+  conteudo     String
+  emocoes      String[] @default([]) // emotions felt during writing
+  versiculos   String[] @default([]) // bible verses referenced
+  gratidao     String[] @default([]) // things the user is grateful for
+  oracoes      String[] @default([]) // prayer requests/prayers mentioned
+  reflexoes    String?  // personal reflections
+  clima        String?  // emotional climate: "paz", "ansiedade", "alegria", etc.
+  privacidade  String   @default("privada") // "privada", "compartilhada"
+  isFavorito   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("diario_fe")
+  @@index([userId, createdAt])
 }

@@ -5,6 +5,9 @@ import questionnaireRoutes from './questionnaireRoutes.js';
 import preferencesRoutes from './preferencesRoutes.js';
 import characterRoutes from './characterRoutes.js';
 import chatRoutes from './chatRoutes.js';
+import oracaoRoutes from './oracaoRoutes.js';
+import estudoRoutes from './estudoRoutes.js';
+import diarioFeRoutes from './diarioFeRoutes.js';
 
 const router = Router();
 
@@ -15,6 +18,11 @@ router.use('/user/questionnaire', questionnaireRoutes);
 router.use('/user/preferences', preferencesRoutes);
 router.use('/characters', characterRoutes);
 router.use('/chat', chatRoutes);
+
+// Spiritual features routes
+router.use('/prayers', oracaoRoutes);
+router.use('/studies', estudoRoutes);
+router.use('/diary', diarioFeRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {
