@@ -204,109 +204,44 @@ export class OracaoService {
    * @returns {Promise<Object>} Prayer statistics
    */
   static async getPrayerStats(userId) {
-    try {
-      const [
-        totalPrayers,
-        favoriteCount,
-        categoryStats,
-        recentActivity,
-        // Corrigindo possíveis agregações problemáticas
-        timeSpentData
-      ] = await Promise.all([
-        // Total de orações
-        this.prisma.oracao.count({
-          where: { userId }
-        }),
-
-        // Orações favoritas
-        this.prisma.oracao.count({
-          where: { userId, isFavorita: true }
-        }),
-
-        // Estatísticas por categoria
-        this.prisma.oracao.groupBy({
-          by: ['categoria'],
-          where: { userId },
-          _count: true,
-          orderBy: { _count: { categoria: 'desc' } }
-        }),
-
-        // Atividade recente
-        this.prisma.oracao.count({
-          where: {
-            userId,
-            createdAt: {
-              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-            }
-          }
-        }),
-
-        // Tempo gasto (apenas orações que têm tempoGasto)
-        this.prisma.oracao.findMany({
-          where: { 
-            userId,
-            tempoGasto: { not: null }
-          },
-          select: { tempoGasto: true }
-        })
-      ]);
-
-      // Calcular tempo total manualmente
-      const totalTimeSpent = timeSpentData.reduce((sum, prayer) => {
-        return sum + (prayer.tempoGasto || 0);
-      }, 0);
-
-      const averageTimeSpent = timeSpentData.length > 0 
-        ? Math.round(totalTimeSpent / timeSpentData.length) 
-        : 0;
-
-      return {
-        summary: {
-          totalPrayers,
-          favoriteCount,
-          favoritePercentage: totalPrayers > 0 ? Math.round((favoriteCount / totalPrayers) * 100) : 0,
-          recentActivity,
-          totalTimeSpent,
-          averageTimeSpent
+    const [
+      totalPrayers,
+      categoriesCount,
+      favoritesCount,
+      totalTimeSpent,
+      recentPrayers,
+    ] = await Promise.all([
+      prisma.oracao.count({ where: { userId } }),
+      prisma.oracao.groupBy({
+        by: ['categoria'],
+        where: { userId },
+        _count: true,
+      }),
+      prisma.oracao.count({ where: { userId, isFavorita: true } }),
+      prisma.oracao.aggregate({
+        where: { userId, tempoGasto: { not: null } },
+        _sum: { tempoGasto: true },
+      }),
+      prisma.oracao.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          titulo: true,
+          categoria: true,
+          createdAt: true,
         },
-        categoryDistribution: categoryStats.map(stat => ({
-          categoria: stat.categoria,
-          count: stat._count,
-          percentage: totalPrayers > 0 ? Math.round((stat._count / totalPrayers) * 100) : 0
-        })),
-        insights: this.generatePrayerInsights({
-          totalPrayers,
-          favoriteCount,
-          recentActivity,
-          totalTimeSpent,
-          averageTimeSpent,
-          categoryStats
-        })
-      };
+      }),
+    ]);
 
-    } catch (error) {
-      console.error('Error getting prayer stats:', error);
-      throw new Error('Erro ao obter estatísticas de oração');
-    }
-  }
-
-  generatePrayerInsights(data) {
-    const insights = [];
-    
-    if (data.recentActivity > 0) {
-      insights.push(`Você orou ${data.recentActivity} vezes na última semana.`);
-    }
-    
-    if (data.totalTimeSpent > 0) {
-      insights.push(`Você dedicou ${data.totalTimeSpent} minutos em oração.`);
-    }
-    
-    if (data.categoryStats.length > 0) {
-      const topCategory = data.categoryStats[0];
-      insights.push(`Sua categoria de oração mais frequente é: ${topCategory.categoria}.`);
-    }
-    
-    return insights;
+    return {
+      totalPrayers,
+      categoriesCount,
+      favoritesCount,
+      totalTimeSpent: totalTimeSpent._sum.tempoGasto || 0,
+      recentPrayers,
+    };
   }
 
   /**

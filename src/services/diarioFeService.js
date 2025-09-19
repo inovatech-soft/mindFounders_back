@@ -417,8 +417,7 @@ export class DiarioFeService {
       emotionsStats,
       recentEntries,
       entriesThisMonth,
-      gratitudeCount,
-      prayersCount,
+      gratitudeAndPrayersData,
     ] = await Promise.all([
       prisma.diarioFe.count({ where: { userId } }),
       prisma.diarioFe.count({ where: { userId, isFavorito: true } }),
@@ -451,15 +450,11 @@ export class DiarioFeService {
           },
         },
       }),
-      prisma.diarioFe.aggregate({
+      // Get gratidao and oracoes data for manual counting
+      prisma.diarioFe.findMany({
         where: { userId },
-        _sum: {
+        select: { 
           gratidao: true,
-        },
-      }),
-      prisma.diarioFe.aggregate({
-        where: { userId },
-        _sum: {
           oracoes: true,
         },
       }),
@@ -478,6 +473,15 @@ export class DiarioFeService {
       .slice(0, 5)
       .map(([emotion, count]) => ({ emotion, count }));
 
+    // Count gratitude and prayer items manually
+    const totalGratitudeItems = gratitudeAndPrayersData.reduce((total, entry) => {
+      return total + (entry.gratidao ? entry.gratidao.length : 0);
+    }, 0);
+
+    const totalPrayerItems = gratitudeAndPrayersData.reduce((total, entry) => {
+      return total + (entry.oracoes ? entry.oracoes.length : 0);
+    }, 0);
+
     return {
       totalEntries,
       favoritesCount,
@@ -485,8 +489,8 @@ export class DiarioFeService {
       topEmotions,
       recentEntries,
       entriesThisMonth,
-      totalGratitudeItems: gratitudeCount._sum.gratidao?.length || 0,
-      totalPrayerItems: prayersCount._sum.oracoes?.length || 0,
+      totalGratitudeItems,
+      totalPrayerItems,
     };
   }
 
