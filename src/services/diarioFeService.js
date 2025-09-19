@@ -223,6 +223,193 @@ export class DiarioFeService {
    * @returns {Promise<Object>} Diary statistics
    */
   static async getDiaryStats(userId) {
+    try {
+      const [
+        totalEntries,
+        favoriteCount,
+        climateStats,
+        emotionStats,
+        recentActivity,
+        weeklyActivity,
+        monthlyActivity,
+        // Removendo a agregação problemática de _sum em arrays
+      ] = await Promise.all([
+        // Total de entradas
+        this.prisma.diarioFe.count({
+          where: { userId }
+        }),
+
+        // Entradas favoritas
+        this.prisma.diarioFe.count({
+          where: { userId, isFavorito: true }
+        }),
+
+        // Estatísticas por clima
+        this.prisma.diarioFe.groupBy({
+          by: ['clima'],
+          where: { 
+            userId,
+            clima: { not: null }
+          },
+          _count: true,
+          orderBy: { _count: { clima: 'desc' } }
+        }),
+
+        // Estatísticas por emoções (contagem manual)
+        this.prisma.diarioFe.findMany({
+          where: { userId },
+          select: { emocoes: true }
+        }),
+
+        // Atividade recente (últimos 7 dias)
+        this.prisma.diarioFe.count({
+          where: {
+            userId,
+            createdAt: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            }
+          }
+        }),
+
+        // Atividade semanal (últimas 4 semanas)
+        this.prisma.diarioFe.groupBy({
+          by: ['createdAt'],
+          where: {
+            userId,
+            createdAt: {
+              gte: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
+            }
+          },
+          _count: true
+        }),
+
+        // Atividade mensal (últimos 6 meses)
+        this.prisma.diarioFe.groupBy({
+          by: ['createdAt'],
+          where: {
+            userId,
+            createdAt: {
+              gte: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)
+            }
+          },
+          _count: true
+        })
+      ]);
+
+      // Processar estatísticas de emoções manualmente
+      const emotionCounts = {};
+      emotionStats.forEach(entry => {
+        entry.emocoes.forEach(emocao => {
+          emotionCounts[emocao] = (emotionCounts[emocao] || 0) + 1;
+        });
+      });
+
+      const topEmotions = Object.entries(emotionCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([emotion, count]) => ({ emotion, count }));
+
+      // Processar dados de atividade semanal
+      const weeklyData = this.processWeeklyActivity(weeklyActivity);
+      const monthlyData = this.processMonthlyActivity(monthlyActivity);
+
+      return {
+        summary: {
+          totalEntries,
+          favoriteCount,
+          favoritePercentage: totalEntries > 0 ? Math.round((favoriteCount / totalEntries) * 100) : 0,
+          recentActivity
+        },
+        climateDistribution: climateStats.map(stat => ({
+          clima: stat.clima,
+          count: stat._count,
+          percentage: totalEntries > 0 ? Math.round((stat._count / totalEntries) * 100) : 0
+        })),
+        topEmotions,
+        activity: {
+          weekly: weeklyData,
+          monthly: monthlyData
+        },
+        insights: this.generateInsights({
+          totalEntries,
+          favoriteCount,
+          recentActivity,
+          topEmotions,
+          climateStats
+        })
+      };
+
+    } catch (error) {
+      console.error('Error getting diary stats:', error);
+      throw new Error('Erro ao obter estatísticas do diário');
+    }
+  }
+
+  // Método auxiliar para processar atividade semanal
+  static processWeeklyActivity(weeklyActivity) {
+    const weeks = {};
+    weeklyActivity.forEach(activity => {
+      const week = this.getWeekKey(activity.createdAt);
+      weeks[week] = (weeks[week] || 0) + activity._count;
+    });
+    
+    return Object.entries(weeks)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([week, count]) => ({ week, count }));
+  }
+
+  // Método auxiliar para processar atividade mensal
+  static processMonthlyActivity(monthlyActivity) {
+    const months = {};
+    monthlyActivity.forEach(activity => {
+      const month = this.getMonthKey(activity.createdAt);
+      months[month] = (months[month] || 0) + activity._count;
+    });
+    
+    return Object.entries(months)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ month, count }));
+  }
+
+  // Método auxiliar para gerar insights
+  static generateInsights(data) {
+    const insights = [];
+    
+    if (data.recentActivity > 0) {
+      insights.push(`Você tem mantido uma prática consistente com ${data.recentActivity} entradas na última semana.`);
+    }
+    
+    if (data.favoriteCount > 0) {
+      insights.push(`${data.favoriteCount} de suas entradas são especiais para você (favoritas).`);
+    }
+    
+    if (data.topEmotions.length > 0) {
+      const topEmotion = data.topEmotions[0];
+      insights.push(`A emoção mais presente em suas reflexões é: ${topEmotion.emotion}.`);
+    }
+    
+    return insights;
+  }
+
+  // Métodos auxiliares para formatação de data
+  static getWeekKey(date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const week = Math.ceil(((d - new Date(year, 0, 1)) / 86400000 + 1) / 7);
+    return `${year}-W${week.toString().padStart(2, '0')}`;
+  }
+
+  static getMonthKey(date) {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Get diary statistics for user
+   * @param {string} userId - User's ID
+   * @returns {Promise<Object>} Diary statistics
+   */
+  static async getDiaryStats(userId) {
     const [
       totalEntries,
       favoritesCount,
